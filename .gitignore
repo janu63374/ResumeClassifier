@@ -1,0 +1,25 @@
+
+# Virtual environment
+venv/
+__pycache__/
+*.pyc
+
+# Original resume dataset
+dataset/
+
+# Classified resumes (may contain personal information)
+categorized_resumes/
+
+# Extracted resume data
+resumes.csv
+processed_resumes.csv
+
+# Training data
+models/train_test_data.pkl
+
+# Include model files required to run the application
+
+# Environment and system files
+.env
+.DS_Store
+Thumbs.db
