@@ -51,6 +51,11 @@
                 <span>Job Matching</span>
             </a>
 
+            <a href="#interviewQuestionsSection" class="nav-link">
+                <i class="bi bi-chat-square-text"></i>
+                <span>Interview Questions</span>
+            </a>
+
             <a href="#activitySection" class="nav-link">
                 <i class="bi bi-clock-history"></i>
                 <span>Recent Activity</span>
@@ -458,7 +463,55 @@ We are looking for a Python Developer with knowledge of Python, SQL, Django, HTM
 
 </div>
 
+<!-- AI INTERVIEW QUESTIONS -->
+<div class="panel mt-4" id="interviewQuestionsSection">
 
+    <div class="panel-heading">
+        <h5>
+            <i class="bi bi-chat-square-text"></i>
+            AI Interview Questions
+        </h5>
+        <span>Generate personalized interview questions using AI</span>
+    </div>
+
+    <div class="interview-questions-content">
+
+        <div class="mb-3">
+            <label for="interviewJobDescription" class="form-label">
+                Job Description
+            </label>
+
+            <textarea
+                id="interviewJobDescription"
+                class="form-control"
+                rows="6"
+                placeholder="Paste the job description here to generate relevant interview questions..."
+            ></textarea>
+        </div>
+
+        <button
+            type="button"
+            class="btn btn-primary"
+            id="generateInterviewButton"
+        >
+            <i class="bi bi-stars"></i>
+            Generate Interview Questions
+        </button>
+
+        <div
+            id="interviewStatus"
+            class="mt-3"
+            aria-live="polite"
+        ></div>
+
+        <div
+            id="interviewResult"
+            class="mt-3"
+        ></div>
+
+    </div>
+
+</div>
 
             <!-- RECENT ACTIVITY -->
             <div class="panel mt-4" id="activitySection">

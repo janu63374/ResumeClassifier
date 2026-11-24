@@ -1300,3 +1300,158 @@ document.addEventListener("DOMContentLoaded", async () => {
         updateJobMatchAvailability();
     }
 });
+
+// =========================================
+// NOVA - AI INTERVIEW QUESTION GENERATION
+// Independent Module - Module 10
+// =========================================
+
+const interviewJobDescription = document.getElementById(
+    "interviewJobDescription"
+);
+
+const generateInterviewButton = document.getElementById(
+    "generateInterviewButton"
+);
+
+const interviewStatus = document.getElementById(
+    "interviewStatus"
+);
+
+const interviewResult = document.getElementById(
+    "interviewResult"
+);
+
+
+// Generate personalized interview questions
+if (generateInterviewButton) {
+
+    generateInterviewButton.addEventListener("click", async function () {
+
+        const saved = getSavedUpload();
+
+        const storedFilename = saved?.upload?.storedFilename;
+
+        const jobDescription = interviewJobDescription.value.trim();
+
+        // Validate uploaded resume
+        if (!storedFilename) {
+            interviewStatus.textContent =
+                "Please upload a resume before generating interview questions.";
+            interviewStatus.className = "text-danger mt-3";
+            return;
+        }
+
+        // Validate job description
+        if (!jobDescription) {
+            interviewStatus.textContent =
+                "Please enter a job description.";
+            interviewStatus.className = "text-danger mt-3";
+            return;
+        }
+
+        // Prepare UI
+        generateInterviewButton.disabled = true;
+        generateInterviewButton.textContent = "Generating Questions...";
+
+        interviewStatus.textContent =
+            "AI is analyzing the resume and job description. Please wait...";
+        interviewStatus.className = "text-primary mt-3";
+
+        interviewResult.replaceChildren();
+
+        try {
+
+            const response = await fetch(
+                `${API_BASE_URL}/api/resumes/${encodeURIComponent(storedFilename)}/generate-interview-questions`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        job_description: jobDescription
+                    })
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.detail || "Interview question generation failed."
+                );
+            }
+
+            // Display generation information
+            const heading = document.createElement("h5");
+            heading.className = "mb-3";
+            heading.textContent =
+                `Generated Interview Questions (${data.total_questions})`;
+
+            interviewResult.appendChild(heading);
+
+            const method = document.createElement("p");
+            method.className = "text-muted";
+            method.textContent =
+                `Generation Method: ${data.generation_method}`;
+
+            interviewResult.appendChild(method);
+
+            // Display each generated question
+            data.questions.forEach((item, index) => {
+
+                const card = document.createElement("div");
+                card.className = "card mb-3";
+
+                const cardBody = document.createElement("div");
+                cardBody.className = "card-body";
+
+                const category = document.createElement("h6");
+                category.className = "text-primary";
+                category.textContent =
+                    `Question ${index + 1} - ${item.category}`;
+
+                const question = document.createElement("p");
+                question.className = "fw-semibold mt-2";
+                question.textContent = item.question;
+
+                const purpose = document.createElement("p");
+                purpose.className = "text-muted mb-0";
+                purpose.textContent = `Purpose: ${item.purpose}`;
+
+                cardBody.appendChild(category);
+                cardBody.appendChild(question);
+                cardBody.appendChild(purpose);
+
+                card.appendChild(cardBody);
+                interviewResult.appendChild(card);
+
+            });
+
+            interviewStatus.textContent =
+                "Interview questions generated successfully.";
+
+            interviewStatus.className = "text-success mt-3";
+
+            // Add activity without changing existing activity functionality
+            if (typeof addActivity === "function") {
+                addActivity("AI interview questions generated successfully.");
+            }
+
+        } catch (error) {
+
+            interviewStatus.textContent = error.message;
+            interviewStatus.className = "text-danger mt-3";
+
+        } finally {
+
+            generateInterviewButton.disabled = false;
+            generateInterviewButton.innerHTML =
+                '<i class="bi bi-stars"></i> Generate Interview Questions';
+
+        }
+
+    });
+
+}

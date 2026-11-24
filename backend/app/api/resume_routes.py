@@ -554,12 +554,22 @@ async def compare_candidates(
         "note": "Candidate rankings support recruiter review and are not final hiring decisions."
     }
 
+
 @router.post("/{stored_filename}/generate-interview-questions")
-async def generate_questions(stored_filename: str):
+async def generate_questions(
+    stored_filename: str,
+    job_description: str = Body(..., embed=True)
+):
     if Path(stored_filename).name != stored_filename:
         raise HTTPException(
             status_code=400,
             detail="Invalid filename."
+        )
+
+    if not job_description.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Job description cannot be empty."
         )
 
     file_path = UPLOAD_DIR / stored_filename
@@ -573,11 +583,6 @@ async def generate_questions(stored_filename: str):
     try:
         resume_data = extract_resume_text(str(file_path))
 
-        job_description = (
-            "A professional role requiring relevant technical skills, "
-            "problem-solving, communication, and practical experience."
-        )
-
         result = generate_interview_questions(
             resume_data["text"],
             job_description
@@ -588,9 +593,15 @@ async def generate_questions(stored_filename: str):
             **result
         }
 
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )
+
     except Exception as error:
         raise HTTPException(
-            status_code=500,
+            status_code=502,
             detail=f"Interview question generation failed: {str(error)}"
         )
 
