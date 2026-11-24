@@ -100,73 +100,167 @@ def open_category_folder(category):
 
 import time
 
+
 def classify_resume():
-    file_path = filedialog.askopenfilename(
-        title="Select a Resume",
+    file_paths = filedialog.askopenfilenames(
+        title="Select Multiple Resumes",
         filetypes=[("PDF Files", "*.pdf")]
     )
 
-    if not file_path:
+    if not file_paths:
         return
 
-    try:
-        start = time.time()
-        print("\nStarting resume classification...")
+    total = len(file_paths)
+    successful = 0
+    failed = 0
+    results = []
 
-        print("Extracting PDF text...")
-        original_text = extract_pdf_text(file_path)
-        print(f"Text extraction: {time.time() - start:.2f} seconds")
+    print(f"\nStarting batch classification: {total} resumes")
 
-        if not original_text.strip():
-            messagebox.showwarning(
-                "No Text Found",
-                "No selectable text found in this PDF."
+    for index, file_path in enumerate(file_paths, start=1):
+        file_name = Path(file_path).name
+
+        try:
+            print(f"\nProcessing {index}/{total}: {file_name}")
+
+            # Extract PDF text
+            original_text = extract_pdf_text(file_path)
+
+            if not original_text.strip():
+                failed += 1
+                results.append(
+                    f"{file_name} - No selectable text found"
+                )
+                continue
+
+            # Clean extracted text
+            cleaned_text = clean_text(original_text)
+
+            if not cleaned_text.strip():
+                failed += 1
+                results.append(
+                    f"{file_name} - No useful text found"
+                )
+                continue
+
+            # Predict resume category
+            features = vectorizer.transform([cleaned_text])
+            prediction = model.predict(features)[0]
+
+            # Save resume in predicted category folder
+            saved_path = save_resume(file_path, prediction)
+
+            successful += 1
+            results.append(
+                f"{file_name} → {prediction}"
             )
-            return
 
-        print("Cleaning text...")
-        clean_start = time.time()
-        cleaned_text = clean_text(original_text)
-        print(f"Text cleaning: {time.time() - clean_start:.2f} seconds")
+            print(f"Predicted: {prediction}")
+            print(f"Saved: {saved_path}")
 
-        if not cleaned_text.strip():
-            messagebox.showwarning(
-                "Invalid Resume",
-                "No useful text found."
+        except Exception as error:
+            failed += 1
+            results.append(
+                f"{file_name} - Error: {error}"
             )
-            return
+            print(f"Error processing {file_name}: {error}")
 
-        print("Predicting category...")
-        predict_start = time.time()
-        features = vectorizer.transform([cleaned_text])
-        prediction = model.predict(features)[0]
-        print(f"Prediction: {time.time() - predict_start:.2f} seconds")
+    # Update GUI
+    refresh_category_counts()
 
-        print("Saving resume...")
-        save_start = time.time()
-        saved_path = save_resume(file_path, prediction)
-        print(f"Saving: {time.time() - save_start:.2f} seconds")
+    file_label.config(
+        text=f"{total} resumes selected"
+    )
 
-        result_label.config(
-            text=f"Predicted Category: {prediction}",
-            foreground="#15803D"
-        )
+    result_label.config(
+        text=f"Completed: {successful} successful | {failed} failed",
+        foreground="#15803D" if failed == 0 else "#B45309"
+    )
 
-        file_label.config(
-            text=f"File: {Path(file_path).name}"
-        )
 
-        refresh_category_counts()
 
-        print(f"TOTAL TIME: {time.time() - start:.2f} seconds")
+    # Display batch results
+    result_window = tk.Toplevel(root)
+    result_window.title("Classification Results")
+    result_window.geometry("650x500")
+    result_window.configure(bg="#F3F6FB")
+    result_window.transient(root)
 
-        messagebox.showinfo(
-            "Classification Successful",
-            f"Category: {prediction}\n\nResume saved to:\n{saved_path}"
-        )
+    # Main heading
+    tk.Label(
+        result_window,
+        text="Batch Classification Results",
+        font=("Segoe UI", 16, "bold"),
+        bg="#F3F6FB",
+        fg="#172554"
+    ).pack(pady=(15, 5))
 
-    except Exception as error:
-        messagebox.showerror("Classification Error", str(error))
+    # Summary
+    tk.Label(
+        result_window,
+        text=f"Total: {total} | Successful: {successful} | Failed: {failed}",
+        font=("Segoe UI", 10, "bold"),
+        bg="#F3F6FB",
+        fg="#475569"
+    ).pack(pady=5)
+
+    # Results area
+    results_frame = tk.Frame(result_window, bg="white")
+    results_frame.pack(
+        fill="both",
+        expand=True,
+        padx=15,
+        pady=10
+    )
+
+    scrollbar = ttk.Scrollbar(results_frame)
+    scrollbar.pack(side="right", fill="y")
+
+    results_text = tk.Text(
+        results_frame,
+        font=("Segoe UI", 10),
+        wrap="word",
+        yscrollcommand=scrollbar.set,
+        padx=10,
+        pady=10
+    )
+    results_text.pack(fill="both", expand=True)
+
+    scrollbar.config(command=results_text.yview)
+
+    for result in results:
+        results_text.insert("end", result + "\n\n")
+
+    results_text.config(state="disabled")
+
+    # OK button - fixed bottom section
+    button_frame = tk.Frame(result_window, bg="#F3F6FB")
+    button_frame.pack(fill="x", side="bottom", pady=12)
+
+    ok_button = tk.Button(
+        button_frame,
+        text="OK",
+        font=("Segoe UI", 10, "bold"),
+        bg="#172554",
+        fg="white",
+        activebackground="#1E40AF",
+        activeforeground="white",
+        width=15,
+        relief="flat",
+        cursor="hand2",
+        command=result_window.destroy
+    )
+    ok_button.pack()
+
+    print("OK BUTTON CREATED")
+    print("Button size:", ok_button.winfo_reqwidth(), ok_button.winfo_reqheight())
+    print("Button visible:", ok_button.winfo_ismapped())
+
+    # Display window
+    result_window.update_idletasks()
+    result_window.deiconify()
+    result_window.lift()
+    result_window.focus_force()
 
 # ---------------- GUI ----------------
 
@@ -253,7 +347,7 @@ tk.Label(
 
 ttk.Button(
     upload_card,
-    text="Choose Resume PDF",
+    text="Choose Resume PDFs",
     command=classify_resume
 ).pack(pady=8)
 

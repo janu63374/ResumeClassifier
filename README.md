@@ -1,104 +1,200 @@
+# NOVA – AI Talent Intelligence Platform
 
-# Resume Classifier System
+**An AI-powered platform for resume analysis, skill intelligence, job matching, and candidate evaluation.**
 
-An AI-powered Resume Classification System developed using Python and Machine Learning. It automatically extracts text from PDF resumes, predicts their categories, and organizes them into separate folders.
+NOVA is a web-based AI Talent Intelligence Platform designed to help recruiters analyze resumes, identify candidate skills, evaluate job compatibility, and make more informed recruitment decisions.
 
-## Features
+The platform combines Python, Machine Learning, NLP, Gemini AI, and a FastAPI backend with a web-based frontend.
 
-- Upload PDF resumes through a Tkinter GUI.
-- Extract text using PyMuPDF.
-- Preprocess resume text using NLTK.
-- Convert text into numerical features using TF-IDF.
-- Classify resumes using Logistic Regression.
-- Automatically save resumes into categorized folders.
-- View categorized resumes through the GUI.
+## Key Features
 
-## Resume Categories
-
-- Engineering
-- Finance
-- HR
-- Sales
+1. **Resume Upload and Analysis** – Upload and analyze PDF resumes.
+2. **Multi-label Resume Classification** – Identify multiple relevant professional categories.
+3. **AI-powered Skill Extraction** – Extract skills from resume content using Gemini AI, with dictionary-based fallback.
+4. **Candidate Information Extraction** – Identify available candidate details from resumes.
+5. **Job Description Matching** – Compare candidate skills with job requirements.
+6. **Skill Relationship Graph** – Visualize relationships between extracted skills.
+7. **Evidence-based Candidate Scoring** – Calculate candidate scores based on matching skills and evidence.
+8. **Career Timeline Analysis** – Analyze career experience and employment history.
+9. **Alternative Job-role Recommendations** – Suggest other relevant job roles.
+10. **Candidate Comparison** – Compare multiple candidates against job requirements.
+11. **Interview Question Generation** – Generate role-related interview questions.
+12. **Customizable Scoring** – Adjust skill weights during candidate evaluation.
+13. **Confidence Reporting** – Report skill coverage and analysis confidence indicators.
+14. **Duplicate Resume Detection** – Identify exact duplicate resumes using file hashing.
+15. **Fairness, Privacy and Audit Monitoring** – Provide basic monitoring and audit-related checks.
 
 ## Technologies Used
 
+**Backend**
 - Python
-- Tkinter
-- Pandas and NumPy
-- NLTK
-- PyMuPDF
+- FastAPI
+- Uvicorn
+- Pydantic
+
+**Artificial Intelligence and Machine Learning**
+- Google Gemini API
 - Scikit-learn
-- TF-IDF
-- Logistic Regression
+- Sentence Transformers
+- NLTK
+- NetworkX
+
+**Data Processing**
+- Pandas
+- NumPy
+- PyMuPDF
 - Joblib
-- Matplotlib
+- Python-docx
 
-## Model Performance
+**Frontend**
+- HTML5
+- CSS3
+- JavaScript
+- Bootstrap
 
-- Algorithm: Logistic Regression
-- Feature Extraction: TF-IDF
-- Dataset: 200 PDF resumes
-- Training Samples: 160
-- Testing Samples: 40
-- Test Accuracy: 95%
+**Database**
+- MySQL
 
 ## Project Structure
 
 ```text
 ResumeClassifier/
-├── dataset/
-├── categorized_resumes/
+│
+├── backend/
+│   └── app/
+│       ├── main.py
+│       ├── api/
+│       │   └── resume_routes.py
+│       └── services/
+│           ├── audit_monitor.py
+│           ├── candidate_extractor.py
+│           ├── candidate_scorer.py
+│           ├── career_timeline.py
+│           ├── confidence_reporter.py
+│           ├── custom_scorer.py
+│           ├── document_parser.py
+│           ├── duplicate_detector.py
+│           ├── interview_generator.py
+│           ├── job_matcher.py
+│           ├── multilabel_suggester.py
+│           ├── resume_analyzer.py
+│           ├── role_recommender.py
+│           ├── skill_extractor.py
+│           └── skill_graph.py
+│
+├── frontend/
+│   ├── index.html
+│   ├── css/
+│   │   └── style.css
+│   └── js/
+│       └── script.js
+│
 ├── models/
-├── app.py
-├── extract_text.py
-├── preprocess.py
-├── feature_extraction.py
-├── train_model.py
-├── evaluate_model.py
-├── check_dataset.py
+├── data/
 ├── requirements.txt
+├── .gitignore
+├── .env.example
+├── app.py
 └── README.md
 ```
 
-## Installation
+## Installation and Setup
 
-1. Clone the repository:
+### 1. Clone the Repository
 
-   git clone YOUR_GITHUB_REPOSITORY_URL
+```bash
+git clone YOUR_GITHUB_REPOSITORY_URL
+cd ResumeClassifier
+```
 
-2. Navigate to the project folder:
+### 2. Create a Virtual Environment
 
-   cd ResumeClassifier
+```bash
+python -m venv venv
+```
 
-3. Create a virtual environment:
+### 3. Activate the Environment
 
-   python -m venv venv
+Windows PowerShell:
 
-4. Activate the environment:
+```powershell
+.\venv\Scripts\Activate.ps1
+```
 
-   .\venv\Scripts\activate
+### 4. Install Dependencies
 
-5. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-   pip install -r requirements.txt
+### 5. Configure Environment Variables
 
-## Run the Application
+Create a `.env` file in the project root:
 
-python app.py
+```env
+GEMINI_API_KEY=your_gemini_api_key
+```
 
-## How It Works
+Use your own Gemini API key. Never upload your actual `.env` file to GitHub.
 
-1. Upload a PDF resume.
-2. Extract text from the PDF.
-3. Clean and preprocess the extracted text.
-4. Transform the text using the trained TF-IDF vectorizer.
-5. Predict the resume category using Logistic Regression.
-6. Save the resume into its corresponding category folder.
+Configure MySQL credentials if required by your local database setup.
+
+## Running NOVA
+
+### 1. Start the Backend
+
+From the project root:
+
+```bash
+uvicorn backend.app.main:app --reload
+```
+
+Backend:
+
+`http://127.0.0.1:8000`
+
+### 2. Open API Documentation
+
+Visit:
+
+`http://127.0.0.1:8000/docs`
+
+### 3. Run the Frontend
+
+Open the `frontend` folder using Visual Studio Code and launch `index.html` with Live Server.
+
+The default development frontend address is:
+
+`http://127.0.0.1:5500`
+
+## API Endpoints
+
+Interactive API documentation is available at:
+
+`http://127.0.0.1:8000/docs`
+
+The backend also provides:
+
+- `/` – Application welcome endpoint.
+- `/health` – Backend health check.
+
+Resume-related API routes are registered through `backend/app/api/resume_routes.py`.
 
 ## Project Objective
 
-To simplify resume classification by using Natural Language Processing and Machine Learning techniques.
+The objective of NOVA is to simplify resume screening and candidate evaluation by combining artificial intelligence, natural language processing, and skill-based analysis.
 
-## Developed Using
+It aims to support recruiters in identifying relevant candidates, understanding skill compatibility, and comparing applicants more efficiently.
 
-Python | Machine Learning | NLP | Tkinter
+## Important Notes
+
+- Gemini-powered extraction requires a valid API key.
+- MySQL configuration may be required for database-backed features.
+- Candidate scores represent skill matching and coverage, not verified professional proficiency.
+- Duplicate detection identifies exact file duplicates, not necessarily similar resumes.
+- Fairness and audit features provide basic monitoring and should not be treated as legal or regulatory certification.
+- NOVA is an academic/project prototype and requires further validation before production recruitment use.
+
+## Developed With
+
+**Python | Artificial Intelligence | Machine Learning | NLP | FastAPI | Gemini AI | MySQL | HTML | CSS | JavaScript**

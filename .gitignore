@@ -23,3 +23,21 @@ models/train_test_data.pkl
 .env
 .DS_Store
 Thumbs.db
+
+# Uploaded resumes and personal information
+data/uploads/
+
+# Local VS Code settings
+.vscode/
+
+# Development backup files
+*_backup.py
+*_backup.js
+*_backup.html
+*_before_comparison.js
+
+# Generated API documentation output
+openapi_check.txt
+
+# Local generated annotation and suggestion data
+data/processed/
