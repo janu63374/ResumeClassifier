@@ -1,13 +1,15 @@
 
 import re
 import spacy
-
+import html
 
 nlp = spacy.load("en_core_web_sm")
 
 
 # Common resume headings and terms that should not be candidate names
 INVALID_NAMES = {
+    "name",
+    "full name",
     "summary",
     "professional overview",
     "professional summary",
@@ -83,46 +85,152 @@ def extract_phone(text):
     return None
 
 
+
+
+
 def extract_name_candidates(text):
+    text = html.unescape(text)
+
     lines = [
         re.sub(r"\s+", " ", line).strip()
         for line in text.splitlines()
         if line.strip()
     ]
 
-    candidates = []
+    candidates = {}
 
-    for line in lines[:5]:
-        normalized = line.lower()
+    field_labels = {
+    "name", "full name", "candidate name",
+    "address", "permanent address", "current address",
+    "phone", "permanent phone", "mobile", "telephone",
+    "email", "e-mail", "contact", "date of birth",
+    "dob", "nationality", "gender", "location",
+    "linkedin", "website"
+     }
 
-        if normalized in INVALID_NAMES:
+    title_pattern = re.compile(
+        r"^(?:(?:Mr|Mrs|Ms|Miss|Dr|Prof)\.?\s+)",
+        re.IGNORECASE
+    )
+
+    name_token = (
+        r"(?:[A-Za-z](?:\.[A-Za-z]){1,5}\.?|"
+        r"[A-Za-z]\.?|"
+        r"[A-Za-z]+(?:['-][A-Za-z]+)*)"
+    )
+
+    name_pattern = re.compile(
+        rf"^{name_token}(?:\s*{name_token}){{0,3}}$",
+        re.IGNORECASE
+    )
+
+    role_words = {
+        "developer", "analyst", "designer",
+        "administrator", "consultant", "architect",
+        "specialist", "intern", "student",
+        "engineer", "manager", "technician",
+        "supervisor", "experienced"
+    }
+
+    for index, line in enumerate(lines[:40]):
+
+        if len(line) > 100:
             continue
 
-        if len(line.split()) not in (2, 3):
+        # Remove contact information appearing after the name.
+        candidate = re.split(
+            r"\s*(?:\||•|·|▪|◦)\s*",
+            line,
+            maxsplit=1
+        )[0]
+
+        if candidate.lower().strip(" :") in field_labels:
             continue
 
-        if len(line) > 40:
+        candidate = re.sub(
+            r"\s+(?:e-?mail|phone|mobile|contact|address|linkedin|website)\b.*$",
+            "",
+            candidate,
+            flags=re.IGNORECASE
+        )
+
+        # Remove labels such as Name: or Candidate Name:
+        candidate = re.sub(
+            r"^(?:candidate\s+name|name)\s*:\s*",
+            "",
+            candidate,
+            flags=re.IGNORECASE
+        ).strip(" -–—|,;")
+
+        if not candidate:
             continue
 
-        if not re.fullmatch(
-            r"[A-Za-z]+(?:[ '-][A-Za-z]+){1,2}",
-            line
-        ):
+        if candidate.lower().strip(" :") in field_labels:
             continue
 
-        words = set(normalized.split())
-
-        if words & BLOCKED_NAME_WORDS:
+        if candidate.lower().strip() in INVALID_NAMES:
             continue
 
-        candidates.append({
-            "value": line,
-            "confidence": "low",
-            "evidence": line
-        })
+        if any(char.isdigit() for char in candidate):
+            continue
 
-    return candidates if candidates else None
+        body = title_pattern.sub("", candidate).strip()
 
+        if not name_pattern.fullmatch(body):
+            continue
+
+        if len(body) > 45:
+            continue
+
+        name_parts = re.findall(r"[A-Za-z]+", body)
+
+        if not name_parts or not any(len(part) >= 2 for part in name_parts):
+            continue
+
+        normalized_words = {
+            word.lower() for word in name_parts
+        }
+
+        if normalized_words & BLOCKED_NAME_WORDS:
+            continue
+
+        if normalized_words & TECHNICAL_TERMS:
+            continue
+
+        if normalized_words & role_words:
+            continue
+
+        doc = nlp(candidate)
+
+        person_detected = any(
+            ent.label_ == "PERSON"
+            and ent.text.strip().lower() == candidate.lower()
+            for ent in doc.ents
+        )
+
+        score = 40 - index
+
+        if person_detected:
+            score += 5
+
+        candidates[candidate.lower()] = {
+            "value": candidate,
+            "confidence": "high" if person_detected else "medium",
+            "evidence": candidate,
+            "_score": score
+        }
+
+    if not candidates:
+        return None
+
+    best_candidate = max(
+        candidates.values(),
+        key=lambda item: item["_score"]
+    )
+
+    best_candidate.pop("_score", None)
+
+    return [best_candidate]
 
 def is_valid_entity(entity_text):
     value = re.sub(r"\s+", " ", entity_text).strip()
